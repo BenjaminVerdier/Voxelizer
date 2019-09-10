@@ -19,22 +19,23 @@ Voxelizer(MatrixXd &Verts, MatrixXi &Faces);    //cst with existing vertices and
 void loadMesh(std::string path);
 void computeVoxels();
 void computeMesh(MatrixXd &Verts, MatrixXi &Faces);
+void saveVoxels(std::string path);
+void loadVoxels(std::string path);
 
 //getters/setters
 double getRes() {return res;};
 void setRes(double r) {res = r;};
 
-MatrixXd V; //vertices of the current mesh
-MatrixXi F; //Faces of the current mesh
+MatrixXd V,Vv; //vertices of the current mesh/voxel mesh
+MatrixXi F,Fv; //Faces of the current mesh/voxel mesh
 
 
 protected:
 std::vector<bool> voxels;               //voxels vector, size is res^3
 int res;                             //number of voxels in the largest dimension
-double cubeDim;                         //dimension of one cube
+double cubeDim = 1;                         //dimension of one cube
 double minX,maxX,minY,maxY,minZ,maxZ;   //bounding box
 Vector3d corner;                        //corner of the voxel grid with lowest x,y,z values
-
 
 };
 

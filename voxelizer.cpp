@@ -1,13 +1,12 @@
 #include "voxelizer.h"
 
 #include "igl/readOFF.h"
-#include "igl/mat_max.h"
-#include "igl/mat_min.h"
-
 #include "igl/ray_mesh_intersect.h"
 
 #include <iostream>
 #include <algorithm>
+#include <stdio.h>
+#include <fstream>
 
 using namespace Eigen;
 
@@ -81,6 +80,7 @@ void Voxelizer::computeVoxels() {
             }
         }
     }
+    
 
 }
 
@@ -161,4 +161,52 @@ void Voxelizer::computeMesh(MatrixXd &Verts, MatrixXi &Faces) {
         }
     }
     Faces = Faces.array()-1;
+}
+
+void Voxelizer::saveVoxels(std::string path) {
+    std::ofstream outfile (path, std::ofstream::binary);
+
+    char c = res;
+    outfile.write (&c,1);
+    int pos;
+    c = 0;
+    for (size_t i = 0; i < voxels.size(); ++i) {
+        pos = i % 8;
+        if (voxels[i])
+            c |= 1 << pos;
+        else
+            c |= 0 << pos;
+        if (pos == 7) {
+            outfile.write (&c,1);
+            c = 0;
+        }
+    }
+    if (pos < 7) {
+        outfile.write (&c,1);
+    }
+
+    outfile.close();
+}
+
+
+void Voxelizer::loadVoxels(std::string path) {
+    std::ifstream infile (path,std::ifstream::binary);
+    char c;
+    infile.read(&c,1);
+    res = int(c);
+    voxels.clear();
+    int voxnum = res*res*res;
+    voxels.reserve(voxnum);
+    for (size_t i = 0; i < voxnum; ++i) {
+        voxels.push_back(false);
+    }
+    int curVox = 0;
+    for (size_t i = 0; i < voxnum; ++i) {
+        int pos = i % 8;
+        if (pos == 0) {
+            infile.read(&c,1);
+        }
+        voxels[i] = ((c >> pos) & 0x1);
+    }
+    infile.close();
 }

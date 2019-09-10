@@ -49,16 +49,16 @@ int main(int argc, char *argv[])
 
 int cli(int argc, char *argv[]) {
   std::string file = BUNNY;
+  std::string saveFile = "";
   bool voxelize = false;
   bool saveVox = false;
   bool fileIsVoxels = false;
   int res = 32;
 
   int opt;
-  while ((opt = getopt(argc, argv, "f:vser:")) != -1) {
+  while ((opt = getopt(argc, argv, "f:vs:e:r:")) != -1) {
     switch (opt) {
       case 'f':
-        if (!optarg) break;
         file = optarg;
         break;
       case 'v':
@@ -66,9 +66,11 @@ int cli(int argc, char *argv[]) {
         break;
       case 's':
         saveVox = true;
+        saveFile = optarg;
         break;
       case 'e':
         fileIsVoxels = true;
+        file = optarg;
         break;
       case 'r':
         if (!optarg) break;
@@ -83,24 +85,26 @@ int cli(int argc, char *argv[]) {
   
   if (!fileIsVoxels) {
     vox.loadMesh(file);
-  } else {
+    vox.setRes(res);
+    
+    if (voxelize) {
+      vox.computeVoxels();
+      vox.computeMesh(V,F);
 
-  }
+      if (saveVox) {
+        vox.saveVoxels(saveFile);
+      }
 
-  vox.setRes(res);
-
-  if (voxelize) {
-    vox.computeVoxels();
-    vox.computeMesh(V,F);
-
-    if (saveVox) {
-
+    } else {
+      V = vox.V;
+      F = vox.F;
     }
-
   } else {
-    V = vox.V;
-    F = vox.F;
+    vox.loadVoxels(file);
+    vox.computeMesh(V,F);
   }
+
+
 
 
   // Plot the mesh
