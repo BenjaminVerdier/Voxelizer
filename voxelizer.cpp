@@ -36,23 +36,29 @@ void Voxelizer::computeVoxels() {
     }
     
     //get size of a voxel
-    VectorXi idxs;
-    VectorXf vals;
-    igl::mat_max(V,1,vals,idxs);
-    maxX = vals[0];
-    maxY = vals[1];
-    maxZ = vals[2];
+    Vector3d m = V.colwise().minCoeff();
+    Vector3d M = V.colwise().maxCoeff();
+    Vector3d dif = M-m;
+    double min = dif.minCoeff();
+    if (min < 10) {
+        V *= 10/min;
+    }
+    m = V.colwise().minCoeff();
+    M = V.colwise().maxCoeff();
+    dif = M-m;
+    double longestSide = dif.maxCoeff();
     
-    igl::mat_min(V,1,vals,idxs);
-    minX = vals[0];
-    minY = vals[1];
-    minZ = vals[2];
+    maxX = M(0);
+    maxY = M(1);
+    maxZ = M(2);
+    minX = m(0);
+    minY = m(1);
+    minZ = m(2);
 
-    double lengthX = maxX - minX;
-    double lengthY = maxY - minY;
-    double lengthZ = maxZ - minZ;
+    double lengthX = dif(0);
+    double lengthY = dif(1);
+    double lengthZ = dif(2);
 
-    double longestSide = lengthX > lengthY ? (lengthX > lengthZ ? lengthX : lengthZ) : (lengthY > lengthZ ? lengthY : lengthZ);
     cubeDim = longestSide / res;
 
     corner = Vector3d(minX,minY,minZ);
@@ -69,8 +75,7 @@ void Voxelizer::computeVoxels() {
             for (size_t k = 0; k < res; ++k) {
                 std::vector<igl::Hit> hits;
                 Vector3d src = corner + Vector3d(i*cubeDim, j*cubeDim, k*cubeDim) + cornerToCenter;
-                if (igl::ray_mesh_intersect(src, dir, V, F, hits) && hits.size() % 2 == 1 && 
-                igl::ray_mesh_intersect(src, -dir, V, F, hits) && hits.size() % 2 == 1) {
+                if (igl::ray_mesh_intersect(src, dir, V, F, hits) && hits.size() % 2 == 1) {
                     voxels[i*res*res + j*res + k] = true;
                 }
             }
