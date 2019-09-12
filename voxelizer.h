@@ -2,6 +2,7 @@
 #define VOXELIZER_H
 
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <vector>
 
 using namespace Eigen;
@@ -18,16 +19,18 @@ Voxelizer(MatrixXd &Verts, MatrixXi &Faces);    //cst with existing vertices and
 //utilities
 void loadMesh(std::string path);
 void computeVoxels();
-void computeMesh(MatrixXd &Verts, MatrixXi &Faces);
+void computeVoxelizedMesh();
 void saveVoxels(std::string path);
 void loadVoxels(std::string path);
+void loadCell(std::string path);
+void writeMesh(std::string path);
 
 //getters/setters
 double getRes() {return res;};
 void setRes(double r) {res = r;};
 
-MatrixXd V,Vv; //vertices of the current mesh/voxel mesh
-MatrixXi F,Fv; //Faces of the current mesh/voxel mesh
+MatrixXd V,Vv,Vc; //vertices of the current mesh/voxel mesh/cell mesh
+MatrixXi F,Fv,Fc; //Faces of the current mesh/voxel mesh/cell mesh
 
 
 protected:

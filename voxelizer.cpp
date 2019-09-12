@@ -1,6 +1,7 @@
 #include "voxelizer.h"
 
-#include "igl/readOFF.h"
+#include "igl/read_triangle_mesh.h"
+#include "igl/write_triangle_mesh.h"
 #include "igl/ray_mesh_intersect.h"
 
 #include <iostream>
@@ -11,6 +12,28 @@
 using namespace Eigen;
 
 Voxelizer::Voxelizer() {
+    Vc = (Eigen::MatrixXd(8,3)<<
+    0.0,0.0,0.0,
+    0.0,0.0,1.0,
+    0.0,1.0,0.0,
+    0.0,1.0,1.0,
+    1.0,0.0,0.0,
+    1.0,0.0,1.0,
+    1.0,1.0,0.0,
+    1.0,1.0,1.0).finished();
+    Fc = (Eigen::MatrixXi(12,3)<<
+    1,7,5,
+    1,3,7,
+    1,4,3,
+    1,2,4,
+    3,8,7,
+    3,4,8,
+    5,7,8,
+    5,8,6,
+    1,5,6,
+    1,6,2,
+    2,6,8,
+    2,8,4).finished().array()-1;
 }
 
 Voxelizer::Voxelizer(std::string path) {
@@ -23,7 +46,24 @@ Voxelizer::Voxelizer(MatrixXd &Verts, MatrixXi &Faces) {
 }
 
 void Voxelizer::loadMesh(std::string path) {
-    igl::readOFF(path, V, F);
+    igl::read_triangle_mesh(path, V, F);
+}
+
+void Voxelizer::writeMesh(std::string path) {
+    igl::write_triangle_mesh(path, Vv, Fv);
+}
+
+void Voxelizer::loadCell(std::string path) {
+    igl::read_triangle_mesh(path, Vc, Fc);
+    Vector3d m = Vc.colwise().minCoeff();
+    for (size_t i = 0; i < Vc.rows(); ++i) {
+        Vc(i,0) -= m(0);
+        Vc(i,1) -= m(1);
+        Vc(i,2) -= m(2);
+    }
+    Vector3d M = Vc.colwise().maxCoeff();
+    auto scaler = Scaling(1./M(0), 1./M(1), 1./M(2));
+    Vc *= scaler;
 }
 
 void Voxelizer::computeVoxels() {
@@ -80,87 +120,34 @@ void Voxelizer::computeVoxels() {
             }
         }
     }
-    
-
 }
 
 
-void Voxelizer::computeMesh(MatrixXd &Verts, MatrixXi &Faces) {
+void Voxelizer::computeVoxelizedMesh() {
     int voxNb = std::count (voxels.begin(), voxels.end(), true);
 
-    Verts = MatrixXd::Zero(8*voxNb,3);
-    Faces = MatrixXi::Zero(12*voxNb,3);
+    Vv = MatrixXd::Zero(Vc.rows()*voxNb,3);
+    Fv = MatrixXi::Zero(Fc.rows()*voxNb,3);
     int faceCount = 0, vertexCount = 0;
     for (size_t i = 0; i < res; ++i) {
         for (size_t j = 0; j < res; ++j) {
             for (size_t k = 0; k < res; ++k) {
                 if (!voxels[i*res*res + j*res + k]) continue;
-                Verts(vertexCount,0) = i;
-                Verts(vertexCount+1,0) = i;
-                Verts(vertexCount+2,0) = i;
-                Verts(vertexCount+3,0) = i;
-                Verts(vertexCount+4,0) = (i+1);
-                Verts(vertexCount+5,0) = (i+1);
-                Verts(vertexCount+6,0) = (i+1);
-                Verts(vertexCount+7,0) = (i+1);
-                Verts(vertexCount,1) = j;
-                Verts(vertexCount+1,1) = j;
-                Verts(vertexCount+2,1) = (j+1);
-                Verts(vertexCount+3,1) = (j+1);
-                Verts(vertexCount+4,1) = j;
-                Verts(vertexCount+5,1) = j;
-                Verts(vertexCount+6,1) = (j+1);
-                Verts(vertexCount+7,1) = (j+1);
-                Verts(vertexCount,2) = k;
-                Verts(vertexCount+1,2) = (k+1);
-                Verts(vertexCount+2,2) = k;
-                Verts(vertexCount+3,2) = (k+1);
-                Verts(vertexCount+4,2) = k;
-                Verts(vertexCount+5,2) = (k+1);
-                Verts(vertexCount+6,2) = k;
-                Verts(vertexCount+7,2) = (k+1);
-                Faces(faceCount,0) = vertexCount + 1;
-                Faces(faceCount+1,0) = vertexCount + 1;
-                Faces(faceCount+2,0) = vertexCount + 1;
-                Faces(faceCount+3,0) = vertexCount + 1;
-                Faces(faceCount+4,0) = vertexCount + 3;
-                Faces(faceCount+5,0) = vertexCount + 3;
-                Faces(faceCount+6,0) = vertexCount + 5;
-                Faces(faceCount+7,0) = vertexCount + 5;
-                Faces(faceCount+8,0) = vertexCount + 1;
-                Faces(faceCount+9,0) = vertexCount + 1;
-                Faces(faceCount+10,0) = vertexCount + 2;
-                Faces(faceCount+11,0) = vertexCount + 2;
-                Faces(faceCount,1) = vertexCount + 7;
-                Faces(faceCount+1,1) = vertexCount + 3;
-                Faces(faceCount+2,1) = vertexCount + 4;
-                Faces(faceCount+3,1) = vertexCount + 2;
-                Faces(faceCount+4,1) = vertexCount + 8;
-                Faces(faceCount+5,1) = vertexCount + 4;
-                Faces(faceCount+6,1) = vertexCount + 7;
-                Faces(faceCount+7,1) = vertexCount + 8;
-                Faces(faceCount+8,1) = vertexCount + 5;
-                Faces(faceCount+9,1) = vertexCount + 6;
-                Faces(faceCount+10,1) = vertexCount + 6;
-                Faces(faceCount+11,1) = vertexCount + 8;
-                Faces(faceCount,2) = vertexCount + 5;
-                Faces(faceCount+1,2) = vertexCount + 7;
-                Faces(faceCount+2,2) = vertexCount + 3;
-                Faces(faceCount+3,2) = vertexCount + 4;
-                Faces(faceCount+4,2) = vertexCount + 7;
-                Faces(faceCount+5,2) = vertexCount + 8;
-                Faces(faceCount+6,2) = vertexCount + 8;
-                Faces(faceCount+7,2) = vertexCount + 6;
-                Faces(faceCount+8,2) = vertexCount + 6;
-                Faces(faceCount+9,2) = vertexCount + 2;
-                Faces(faceCount+10,2) = vertexCount + 8;
-                Faces(faceCount+11,2) = vertexCount + 4;
-                vertexCount += 8;
-                faceCount += 12;
+                for (size_t m = 0; m < Vc.rows(); ++m) {
+                    Vv(vertexCount + m,0) = Vc(m,0) + i;
+                    Vv(vertexCount + m,1) = Vc(m,1) + j;
+                    Vv(vertexCount + m,2) = Vc(m,2) + k;
+                }
+                for (size_t m = 0; m < Fc.rows(); ++m) {
+                    Fv(faceCount + m,0) = Fc(m,0) + vertexCount;
+                    Fv(faceCount + m,1) = Fc(m,1) + vertexCount;
+                    Fv(faceCount + m,2) = Fc(m,2) + vertexCount;
+                }
+                vertexCount +=  Vc.rows();
+                faceCount += Fc.rows();
             }
         }
     }
-    Faces = Faces.array()-1;
 }
 
 void Voxelizer::saveVoxels(std::string path) {

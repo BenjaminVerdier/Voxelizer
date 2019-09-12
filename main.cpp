@@ -7,7 +7,6 @@
 #include <string>
 
 //igl includes
-#include <igl/readOFF.h>
 #include <igl/opengl/glfw/Viewer.h>
 #include <igl/jet.h>
 
@@ -37,13 +36,18 @@ int main(int argc, char *argv[])
 int cli(int argc, char *argv[]) {
     std::string file = BUNNY;
     std::string saveFile = "";
+    std::string cell = "";
+    std::string outputFile = "";
+    bool customCell = false;
     bool voxelize = false;
     bool saveVox = false;
     bool fileIsVoxels = false;
+    bool display = false;
+    bool write = false;
     int res = 32;
 
     int opt;
-    while ((opt = getopt(argc, argv, "f:vs:e:r:")) != -1) {
+    while ((opt = getopt(argc, argv, "f:vs:e:r:dc:w:")) != -1) {
         switch (opt) {
             case 'f':
                 file = optarg;
@@ -60,15 +64,28 @@ int cli(int argc, char *argv[]) {
                 file = optarg;
                 break;
             case 'r':
-                if (!optarg) break;
                 res = atoi(optarg);
                 break;
+            case 'd':
+                display = true;
+                break;
+            case 'c':
+                customCell = true;
+                cell = optarg;
+                break;
+            case 'w':
+                write = true;
+                outputFile = optarg;
             default:
                 break;
         }
     }
     
     Voxelizer vox;
+
+    if (customCell) {
+        vox.loadCell(cell);
+    }
     
     if (!fileIsVoxels) {
         vox.loadMesh(file);
@@ -76,7 +93,9 @@ int cli(int argc, char *argv[]) {
         
         if (voxelize) {
             vox.computeVoxels();
-            vox.computeMesh(V,F);
+            vox.computeVoxelizedMesh();
+            V = vox.Vv;
+            F = vox.Fv;
 
             if (saveVox) {
                 vox.saveVoxels(saveFile);
@@ -88,8 +107,15 @@ int cli(int argc, char *argv[]) {
         }
     } else {
         vox.loadVoxels(file);
-        vox.computeMesh(V,F);
+        vox.computeVoxelizedMesh();
+        V = vox.Vv;
+        F = vox.Fv;
     }
+
+    if (write) {
+        vox.writeMesh(outputFile);
+    }
+
     // Plot the mesh
     opengl::glfw::Viewer viewer;
     viewer.data().set_mesh(V, F);
