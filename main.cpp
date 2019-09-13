@@ -26,6 +26,8 @@ int cli(int argc, char *argv[]);
 
 bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier);
 
+void cliHelp();
+
 void displayHelp();
 
 int main(int argc, char *argv[])
@@ -85,16 +87,8 @@ int cli(int argc, char *argv[]) {
                 outputFile = optarg;
                 break;
             case 'h':
-                std::cout << "Voxelizer help:" << "\n" <<\
-                                "-f filename \t opens a mesh located at filename. 'default' loads the stanford bunny." << "\n" <<\
-                                "-v \t\t voxelizes the mesh." << "\n" <<\
-                                "-s filename \t saves the voxelization to filename." << "\n" <<\
-                                "-e filename \t loads voxel file (created with -s) located at filename." << "\n" <<\
-                                "-r n \t\t sets the resolution (number of voxels along the largest direction of the mesh) to n." << "\n" <<\
-                                "-d \t\t opens the display." << "\n" <<\
-                                "-c filename \t loads a custom cell at filename to use instead of a cube." << "\n" <<\
-                                "-w filename \t saves the voxelized mesh to filename." << "\n" <<\
-                                "-h \t\t displays this menu." << "\n";
+                cliHelp();
+                break;
             default:
                 break;
         }
@@ -262,6 +256,18 @@ bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier
     return false;
 }
 
+void cliHelp() {
+    std::cout << "Voxelizer CLI help:" << "\n" <<\
+                                "-f filename \t opens a mesh located at filename. 'default' loads the stanford bunny." << "\n" <<\
+                                "-v \t\t voxelizes the mesh." << "\n" <<\
+                                "-s filename \t saves the voxelization to filename." << "\n" <<\
+                                "-e filename \t loads voxel file (created with -s) located at filename." << "\n" <<\
+                                "-r n \t\t sets the resolution (number of voxels along the largest direction of the mesh) to n." << "\n" <<\
+                                "-d \t\t opens the display." << "\n" <<\
+                                "-c filename \t loads a custom cell at filename to use instead of a cube." << "\n" <<\
+                                "-w filename \t saves the voxelized mesh to filename." << "\n" <<\
+                                "-h \t\t displays this menu." << "\n";
+}
 
 void displayHelp() {
     std::cout << \
