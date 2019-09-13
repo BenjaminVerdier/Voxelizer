@@ -36,7 +36,7 @@ MatrixXi Fm,Fv,Fc; //Faces of the current mesh/voxel mesh/cell mesh
 
 protected:
 std::vector<bool> voxels;               //voxels vector, size is res^3
-int res;                             //number of voxels in the largest dimension
+int res = 16;                             //number of voxels in the largest dimension
 double cubeDim = 1;                         //dimension of one cube
 double minX,maxX,minY,maxY,minZ,maxZ;   //bounding box
 Vector3d corner;                        //corner of the voxel grid with lowest x,y,z values

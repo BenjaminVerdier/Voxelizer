@@ -58,6 +58,7 @@ void Voxelizer::processMesh() {
         Vm(i,1) -= m(1);
         Vm(i,2) -= m(2);
     }
+
     Vector3d M = Vm.colwise().maxCoeff();
     auto scaler = Scaling((double)res/M(0), (double)res/M(1), (double)res/M(2));
     Vm *= scaler;
