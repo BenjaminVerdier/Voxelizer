@@ -16,14 +16,14 @@
 using namespace Eigen;
 using namespace igl;
 
-MatrixXd V;
-MatrixXi F;
-MatrixXd C;
-
 const std::string DATADIR = "/home/bverdier/voxelizer/data";
 const std::string BUNNY = "/home/bverdier/voxelizer/data/bunny.off";
 
+Voxelizer vox;
+
 int cli(int argc, char *argv[]);
+
+bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier);
 
 int main(int argc, char *argv[])
 {   
@@ -34,14 +34,16 @@ int main(int argc, char *argv[])
 }
 
 int cli(int argc, char *argv[]) {
-    std::string file = BUNNY;
+    std::string meshFile = "";
+    std::string voxelFile = "";
     std::string saveFile = "";
-    std::string cell = "";
+    std::string cellFile = "";
     std::string outputFile = "";
+    bool loadMesh = false;
     bool customCell = false;
     bool voxelize = false;
     bool saveVox = false;
-    bool fileIsVoxels = false;
+    bool loadVoxels = false;
     bool display = false;
     bool write = false;
     int res = 32;
@@ -50,7 +52,9 @@ int cli(int argc, char *argv[]) {
     while ((opt = getopt(argc, argv, "f:vs:e:r:dc:w:")) != -1) {
         switch (opt) {
             case 'f':
-                file = optarg;
+                loadMesh = true;
+                meshFile = optarg;
+                if (!meshFile.compare("default")) meshFile = BUNNY;
                 break;
             case 'v':
                 voxelize = true;
@@ -60,8 +64,8 @@ int cli(int argc, char *argv[]) {
                 saveFile = optarg;
                 break;
             case 'e':
-                fileIsVoxels = true;
-                file = optarg;
+                loadVoxels = true;
+                voxelFile = optarg;
                 break;
             case 'r':
                 res = atoi(optarg);
@@ -71,7 +75,7 @@ int cli(int argc, char *argv[]) {
                 break;
             case 'c':
                 customCell = true;
-                cell = optarg;
+                cellFile = optarg;
                 break;
             case 'w':
                 write = true;
@@ -80,45 +84,45 @@ int cli(int argc, char *argv[]) {
                 break;
         }
     }
-    
-    Voxelizer vox;
 
     if (customCell) {
-        vox.loadCell(cell);
+        vox.loadCell(cellFile);
     }
-    
-    if (!fileIsVoxels) {
-        vox.loadMesh(file);
+
+    if (loadMesh) {
+        vox.loadMesh(meshFile);
+    }
+
+    if (voxelize) {
         vox.setRes(res);
-        
-        if (voxelize) {
-            vox.computeVoxels();
-            vox.computeVoxelizedMesh();
-            V = vox.Vv;
-            F = vox.Fv;
-
-            if (saveVox) {
-                vox.saveVoxels(saveFile);
-            }
-
-        } else {
-            V = vox.V;
-            F = vox.F;
-        }
-    } else {
-        vox.loadVoxels(file);
+        vox.computeVoxels();
         vox.computeVoxelizedMesh();
-        V = vox.Vv;
-        F = vox.Fv;
+
+        if (saveVox) {
+            vox.saveVoxels(saveFile);
+        }
+
+    } else if (loadVoxels) {
+        vox.loadVoxels(voxelFile);
+        vox.computeVoxelizedMesh();
     }
 
     if (write) {
-        vox.writeMesh(outputFile);
+        vox.writeVoxelizedMesh(outputFile);
     }
+
+    if (!display) return 0;
 
     // Plot the mesh
     opengl::glfw::Viewer viewer;
-    viewer.data().set_mesh(V, F);
+
+    viewer.callback_key_down = &key_down;
+
+    if (loadMesh) {
+        viewer.data().set_mesh(vox.Vm, vox.Fm);
+    } else if (voxelize || loadVoxels) {
+        viewer.data().set_mesh(vox.Vv, vox.Fv);
+    }
     viewer.data().set_face_based(true);
     viewer.core().toggle(viewer.data().show_lines);
 
@@ -126,4 +130,30 @@ int cli(int argc, char *argv[]) {
     viewer.launch();
 
     return 0;
+}
+
+bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier)
+{
+  if (key == '1')
+  {
+    viewer.data().clear();
+    viewer.data().set_mesh(vox.Vm, vox.Fm);
+    viewer.data().set_face_based(true);
+    viewer.core().align_camera_center(vox.Vm,vox.Fm);
+  }
+  else if (key == '2')
+  {
+    viewer.data().clear();
+    viewer.data().set_mesh(vox.Vc, vox.Fc);
+    viewer.data().set_face_based(true);
+    viewer.core().align_camera_center(vox.Vc,vox.Fc);
+  }
+  else if (key == '3')
+  {
+    viewer.data().clear();
+    viewer.data().set_mesh(vox.Vv, vox.Fv);
+    viewer.data().set_face_based(true);
+    viewer.core().align_camera_center(vox.Vv,vox.Fv);
+  }
+  return false;
 }

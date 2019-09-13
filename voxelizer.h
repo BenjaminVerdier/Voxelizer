@@ -23,14 +23,14 @@ void computeVoxelizedMesh();
 void saveVoxels(std::string path);
 void loadVoxels(std::string path);
 void loadCell(std::string path);
-void writeMesh(std::string path);
+void writeVoxelizedMesh(std::string path);
 
 //getters/setters
 double getRes() {return res;};
 void setRes(double r) {res = r;};
 
-MatrixXd V,Vv,Vc; //vertices of the current mesh/voxel mesh/cell mesh
-MatrixXi F,Fv,Fc; //Faces of the current mesh/voxel mesh/cell mesh
+MatrixXd Vm,Vv,Vc; //vertices of the current mesh/voxel mesh/cell mesh
+MatrixXi Fm,Fv,Fc; //Faces of the current mesh/voxel mesh/cell mesh
 
 
 protected:

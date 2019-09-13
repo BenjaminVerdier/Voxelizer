@@ -41,15 +41,15 @@ Voxelizer::Voxelizer(std::string path) {
 }
 
 Voxelizer::Voxelizer(MatrixXd &Verts, MatrixXi &Faces) {
-    V = Verts;
-    F = Faces;
+    Vm = Verts;
+    Fm = Faces;
 }
 
 void Voxelizer::loadMesh(std::string path) {
-    igl::read_triangle_mesh(path, V, F);
+    igl::read_triangle_mesh(path, Vm, Fm);
 }
 
-void Voxelizer::writeMesh(std::string path) {
+void Voxelizer::writeVoxelizedMesh(std::string path) {
     igl::write_triangle_mesh(path, Vv, Fv);
 }
 
@@ -75,15 +75,15 @@ void Voxelizer::computeVoxels() {
     }
     
     //get size of a voxel
-    Vector3d m = V.colwise().minCoeff();
-    Vector3d M = V.colwise().maxCoeff();
+    Vector3d m = Vm.colwise().minCoeff();
+    Vector3d M = Vm.colwise().maxCoeff();
     Vector3d dif = M-m;
     double min = dif.minCoeff();
     if (min < 10) {
-        V *= 10/min;
+        Vm *= 10/min;
     }
-    m = V.colwise().minCoeff();
-    M = V.colwise().maxCoeff();
+    m = Vm.colwise().minCoeff();
+    M = Vm.colwise().maxCoeff();
     dif = M-m;
     double longestSide = dif.maxCoeff();
     
@@ -114,7 +114,7 @@ void Voxelizer::computeVoxels() {
             for (size_t k = 0; k < res; ++k) {
                 std::vector<igl::Hit> hits;
                 Vector3d src = corner + Vector3d(i*cubeDim, j*cubeDim, k*cubeDim) + cornerToCenter;
-                if (igl::ray_mesh_intersect(src, dir, V, F, hits) && hits.size() % 2 == 1) {
+                if (igl::ray_mesh_intersect(src, dir, Vm, Fm, hits) && hits.size() % 2 == 1) {
                     voxels[i*res*res + j*res + k] = true;
                 }
             }
