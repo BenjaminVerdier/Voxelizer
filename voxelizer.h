@@ -18,6 +18,7 @@ Voxelizer(MatrixXd &Verts, MatrixXi &Faces);    //cst with existing vertices and
 
 //utilities
 void loadMesh(std::string path);
+void processMesh();
 void computeVoxels();
 void computeVoxelizedMesh();
 void saveVoxels(std::string path);

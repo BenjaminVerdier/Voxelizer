@@ -90,22 +90,24 @@ int cli(int argc, char *argv[]) {
     }
 
     if (loadMesh) {
-        vox.loadMesh(meshFile);
-    }
-
-    if (voxelize) {
         vox.setRes(res);
-        vox.computeVoxels();
-        vox.computeVoxelizedMesh();
+        vox.loadMesh(meshFile);
+        if (voxelize) {
+            vox.computeVoxels();
+            vox.computeVoxelizedMesh();
 
-        if (saveVox) {
-            vox.saveVoxels(saveFile);
+            if (saveVox) {
+                vox.saveVoxels(saveFile);
+            }
+
+        } else if (loadVoxels) {
+            vox.loadVoxels(voxelFile);
+            vox.computeVoxelizedMesh();
+            vox.processMesh();
         }
-
-    } else if (loadVoxels) {
-        vox.loadVoxels(voxelFile);
-        vox.computeVoxelizedMesh();
     }
+
+    
 
     if (write) {
         vox.writeVoxelizedMesh(outputFile);
@@ -118,13 +120,28 @@ int cli(int argc, char *argv[]) {
 
     viewer.callback_key_down = &key_down;
 
+    viewer.append_mesh();
+    viewer.append_mesh();
+    viewer.core().toggle(viewer.data(0).show_lines);
+    viewer.core().toggle(viewer.data(1).show_lines);
+    viewer.core().toggle(viewer.data(2).show_lines);
+    viewer.data(0).set_mesh(vox.Vm, vox.Fm);
+    viewer.data(0).set_face_based(true);
+    viewer.data(1).set_mesh(vox.Vc, vox.Fc);
+    viewer.data(1).set_face_based(true);
+    viewer.data(2).set_mesh(vox.Vv, vox.Fv);
+    viewer.data(2).set_face_based(true);
+
+    viewer.data(1).set_visible(false);
     if (loadMesh) {
-        viewer.data().set_mesh(vox.Vm, vox.Fm);
+        viewer.data(0).set_visible(true);
+        viewer.data(2).set_visible(false);
+        viewer.core().align_camera_center(vox.Vm,vox.Fm);
     } else if (voxelize || loadVoxels) {
-        viewer.data().set_mesh(vox.Vv, vox.Fv);
+        viewer.data(0).set_visible(false);
+        viewer.data(2).set_visible(true);
+        viewer.core().align_camera_center(vox.Vv,vox.Fv);
     }
-    viewer.data().set_face_based(true);
-    viewer.core().toggle(viewer.data().show_lines);
 
     // Launch the viewer
     viewer.launch();
@@ -136,23 +153,23 @@ bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier
 {
   if (key == '1')
   {
-    viewer.data().clear();
-    viewer.data().set_mesh(vox.Vm, vox.Fm);
-    viewer.data().set_face_based(true);
+    viewer.data(0).set_visible(true);
+    viewer.data(1).set_visible(false);
+    viewer.data(2).set_visible(false);
     viewer.core().align_camera_center(vox.Vm,vox.Fm);
   }
   else if (key == '2')
   {
-    viewer.data().clear();
-    viewer.data().set_mesh(vox.Vc, vox.Fc);
-    viewer.data().set_face_based(true);
+    viewer.data(0).set_visible(false);
+    viewer.data(1).set_visible(true);
+    viewer.data(2).set_visible(false);
     viewer.core().align_camera_center(vox.Vc,vox.Fc);
   }
   else if (key == '3')
   {
-    viewer.data().clear();
-    viewer.data().set_mesh(vox.Vv, vox.Fv);
-    viewer.data().set_face_based(true);
+    viewer.data(0).set_visible(false);
+    viewer.data(1).set_visible(false);
+    viewer.data(2).set_visible(true);
     viewer.core().align_camera_center(vox.Vv,vox.Fv);
   }
   return false;

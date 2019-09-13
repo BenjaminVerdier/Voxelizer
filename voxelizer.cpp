@@ -43,10 +43,24 @@ Voxelizer::Voxelizer(std::string path) {
 Voxelizer::Voxelizer(MatrixXd &Verts, MatrixXi &Faces) {
     Vm = Verts;
     Fm = Faces;
+    processMesh();
 }
 
 void Voxelizer::loadMesh(std::string path) {
     igl::read_triangle_mesh(path, Vm, Fm);
+    processMesh();
+}
+
+void Voxelizer::processMesh() {
+    Vector3d m = Vm.colwise().minCoeff();
+    for (size_t i = 0; i < Vm.rows(); ++i) {
+        Vm(i,0) -= m(0);
+        Vm(i,1) -= m(1);
+        Vm(i,2) -= m(2);
+    }
+    Vector3d M = Vm.colwise().maxCoeff();
+    auto scaler = Scaling((double)res/M(0), (double)res/M(1), (double)res/M(2));
+    Vm *= scaler;
 }
 
 void Voxelizer::writeVoxelizedMesh(std::string path) {
@@ -75,32 +89,15 @@ void Voxelizer::computeVoxels() {
     }
     
     //get size of a voxel
-    Vector3d m = Vm.colwise().minCoeff();
     Vector3d M = Vm.colwise().maxCoeff();
-    Vector3d dif = M-m;
-    double min = dif.minCoeff();
-    if (min < 10) {
-        Vm *= 10/min;
-    }
-    m = Vm.colwise().minCoeff();
-    M = Vm.colwise().maxCoeff();
-    dif = M-m;
-    double longestSide = dif.maxCoeff();
-    
-    maxX = M(0);
-    maxY = M(1);
-    maxZ = M(2);
-    minX = m(0);
-    minY = m(1);
-    minZ = m(2);
+    double longestSide = Vm.maxCoeff();
 
-    double lengthX = dif(0);
-    double lengthY = dif(1);
-    double lengthZ = dif(2);
+    double lengthX = M(0);
+    double lengthY = M(1);
+    double lengthZ = M(2);
 
     cubeDim = longestSide / res;
 
-    corner = Vector3d(minX,minY,minZ);
     corner(0) -= (longestSide - lengthX) / 2;
     corner(1) -= (longestSide - lengthY) / 2;
     corner(2) -= (longestSide - lengthZ) / 2;
