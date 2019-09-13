@@ -252,6 +252,13 @@ bool key_down(igl::opengl::glfw::Viewer& viewer, unsigned char key, int modifier
         if(fname.length() == 0) return false;
         vox.saveVoxels(fname);
     }
+    else if (key == 'R') {
+        int res;
+        std::cout << "Enter resolution: ";
+        std::cin >> res;
+        if (res < 1 ) res = 16;
+        vox.setRes(res);
+    }
     return false;
 }
 
